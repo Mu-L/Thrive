@@ -84,9 +84,9 @@ public partial class PlaceholderTree : StaticBody3D, IInteractableEntity, IHarve
         AliveMarker.Alive = false;
     }
 
-    public EquipmentCategory? CheckRequiredTool(ICollection<EquipmentCategory> availableTools)
+    public EquipmentCategory? CheckRequiredTool(EquipmentCategory equipment)
     {
-        if (!availableTools.Contains(EquipmentCategory.Axe))
+        if (equipment == EquipmentCategory.Axe)
             return EquipmentCategory.Axe;
 
         return null;

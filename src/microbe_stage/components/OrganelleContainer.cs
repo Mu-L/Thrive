@@ -132,7 +132,7 @@ public struct OrganelleContainer
     public bool AllOrganellesDivided;
 
     /// <summary>
-    ///   Reset this if the organelles are changed to make the <see cref="MicrobeVisualsSystem"/> recreate them
+    ///   Reset this if the organelles are changed to make the <see cref="MulticellularVisualsSystem"/> recreate them
     /// </summary>
     [JsonIgnore]
     public bool OrganelleVisualsCreated;
@@ -145,7 +145,7 @@ public struct OrganelleContainer
     public bool OrganelleComponentsCached;
 
     /// <summary>
-    ///   Internal variable used by the <see cref="MicrobeVisualsSystem"/> to only create visuals for missing /
+    ///   Internal variable used by the <see cref="MulticellularVisualsSystem"/> to only create visuals for missing /
     ///   removed organelles
     /// </summary>
     [JsonIgnore]

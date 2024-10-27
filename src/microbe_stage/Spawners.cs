@@ -763,6 +763,161 @@ public static class SpawnHelpers
         return spawnLimitWeight;
     }
 
+
+
+
+
+
+
+
+
+
+    public static void SpawnMulticellular(IWorldSimulation worldSimulation, IMicrobeSpawnEnvironment spawnEnvironment,
+        Species species, Vector3 location, bool aiControlled,
+        MulticellularSpawnState multicellularSpawnState = MulticellularSpawnState.Bud)
+    {
+        var (recorder, _) = SpawnMulticellularWithoutFinalizing(worldSimulation, spawnEnvironment, species, location,
+            aiControlled, out _, multicellularSpawnState);
+
+        FinalizeEntitySpawn(recorder, worldSimulation);
+    }
+
+    public static (EntityCommandRecorder Recorder, float Weight) SpawnMulticellularWithoutFinalizing(
+        IWorldSimulation worldSimulation, IMicrobeSpawnEnvironment spawnEnvironment, Species species,
+        Vector3 location, bool aiControlled, out EntityRecord entity,
+        MulticellularSpawnState multicellularSpawnState = MulticellularSpawnState.Bud, Random? random = null)
+    {
+        var recorder = worldSimulation.StartRecordingEntityCommands();
+        return (recorder, SpawnMulticellularWithoutFinalizing(worldSimulation, spawnEnvironment, species, location,
+            aiControlled, recorder, out entity, multicellularSpawnState, true, random));
+    }
+
+    public static float SpawnMulticellularWithoutFinalizing(IWorldSimulation worldSimulation,
+        IMicrobeSpawnEnvironment spawnEnvironment, Species species,
+        Vector3 location, bool aiControlled,
+        EntityCommandRecorder recorder, out EntityRecord entity,
+        MulticellularSpawnState multicellularSpawnState = MulticellularSpawnState.Bud,
+        bool giveInitialCompounds = true, Random? random = null)
+    {
+        // If this method is modified it must be ensured that CellPropertiesHelpers.ReApplyCellTypeProperties and
+        // MicrobeVisualOnlySimulation microbe update methods are also up-to-date
+
+        var entityCreator = worldSimulation.GetRecorderWorld(recorder);
+
+        entity = worldSimulation.CreateEntityDeferred(entityCreator);
+
+        // Position
+        entity.Set(new WorldPosition(location, Quaternion.Identity));
+
+        entity.Set(new SpeciesMember(species));
+
+        // Player vs. AI controlled microbe components
+        if (aiControlled)
+        {
+            // Darwinian evolution statistic tracking (these are the external effects that are passed to auto-evo)
+            entity.Set<SurvivalStatistics>();
+
+            entity.Set(new SoundEffectPlayer
+            {
+                AbsoluteMaxDistanceSquared = Constants.MICROBE_SOUND_MAX_DISTANCE_SQUARED,
+            });
+        }
+        else
+        {
+            // We assume that if the cell is not AI controlled it is the player's cell
+            entity.Set<PlayerMarker>();
+
+            // The player's "ears" are placed at the player microbe
+            entity.Set<SoundListener>();
+
+            entity.Set(new SoundEffectPlayer
+            {
+                AbsoluteMaxDistanceSquared = Constants.MICROBE_SOUND_MAX_DISTANCE_SQUARED,
+
+                // As this takes a bit of extra performance this is just set for the player
+                AutoDetectPlayer = true,
+            });
+        }
+
+        if (species is LateMulticellularSpecies multicellularSpecies)
+        {
+            entity.Set(new LateMulticellularSpeciesMember
+            {
+                Species = multicellularSpecies,
+            });
+
+            var properties = new CreatureProperties();
+        }
+        else
+        {
+            throw new NotSupportedException("Unknown species type to spawn a microbe from");
+        }
+
+        var bioProcesses = new BioProcesses
+        {
+            ProcessStatistics = aiControlled ? null : new ProcessStatistics(),
+        };
+
+        // Compound storage
+        var storage = new CompoundStorage
+        {
+            // 0 is used here as this is updated before adding the component anyway
+            Compounds = new CompoundBag(0),
+        };
+
+        if (giveInitialCompounds)
+        {
+            storage.Compounds.AddInitialCompounds(species.InitialCompounds);
+
+            // Extra initial compounds if close to night
+            species.HandleNightSpawnCompounds(storage.Compounds, spawnEnvironment);
+        }
+
+        entity.Set(storage);
+
+        entity.Set(bioProcesses);
+
+        entity.Set(new ReproductionStatus(species.BaseReproductionCost));
+
+        // Visuals
+        entity.Set<SpatialInstance>();
+
+        entity.Set(new RenderPriorityOverride(Constants.MICROBE_DEFAULT_RENDER_PRIORITY));
+
+        entity.Set<EntityMaterial>();
+
+        // Physics
+        entity.Set(PhysicsHelpers.CreatePhysicsForMicrobe());
+
+        // Used in certain damage types to apply a cooldown
+        entity.Set<DamageCooldown>();
+
+        entity.Set(new CollisionManagement
+        {
+            RecordActiveCollisions = Constants.MAX_SIMULTANEOUS_COLLISIONS_SMALL,
+        });
+
+        // The shape is created in the background (by MicrobePhysicsCreationAndSizeSystem) to reduce lag when
+        // something spawns
+        entity.Set<PhysicsShapeHolder>();
+
+        // Movement
+        entity.Set(new MulticellularControl(location));
+
+        entity.Set(new Health(100));
+
+        entity.Set<StrainAffected>();
+
+        // Selecting is used to throw out specific colony members
+        entity.Set<Selectable>();
+
+        entity.Set(new ReadableName(new LocalizedString(species.FormattedName)));
+
+        float spawnLimitWeight = 1;
+
+        return spawnLimitWeight;
+    }
+
     /// <summary>
     ///   Calculates spaced out positions to spawn a bacteria swarm (to avoid them all overlapping)
     /// </summary>

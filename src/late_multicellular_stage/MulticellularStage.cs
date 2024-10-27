@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Linq;
+using Components;
+using DefaultEcs;
 using Godot;
 using Newtonsoft.Json;
 
@@ -10,7 +12,7 @@ using Newtonsoft.Json;
 [SceneLoadedClass("res://src/late_multicellular_stage/MulticellularStage.tscn")]
 [DeserializedCallbackTarget]
 [UseThriveSerializer]
-public partial class MulticellularStage : CreatureStageBase<MulticellularCreature, DummyWorldSimulation>
+public partial class MulticellularStage : CreatureStageBase<Entity, MulticellularWorldSimulation>
 {
     [Export]
     public NodePath? InteractableSystemPath;
@@ -89,7 +91,7 @@ public partial class MulticellularStage : CreatureStageBase<MulticellularCreatur
     public PlayerInspectInfo HoverInfo { get; private set; } = null!;
 
     [JsonIgnore]
-    public override bool HasPlayer => Player != null;
+    public override bool HasPlayer => Player.IsAlive;
 
     public override MainGameState GameState => MainGameState.MulticellularStage;
 
@@ -161,11 +163,11 @@ public partial class MulticellularStage : CreatureStageBase<MulticellularCreatur
         if (playerExtinctInCurrentPatch)
             return;
 
-        if (Player != null)
+        if (HasPlayer)
         {
-            var playerPosition = Player.GlobalPosition;
+            var playerPosition = Player.Get<WorldPosition>().Position;
 
-            if (Player.Species.MulticellularType == MulticellularSpeciesType.Awakened)
+            if (Player.Get<LateMulticellularSpeciesMember>().Species.MulticellularType == MulticellularSpeciesType.Awakened)
             {
                 // TODO: player interaction reach modifier from the species
                 interactableSystem.UpdatePlayerPosition(playerPosition, 0);
@@ -259,7 +261,7 @@ public partial class MulticellularStage : CreatureStageBase<MulticellularCreatur
 
     public override void MoveToEditor()
     {
-        if (Player?.Dead != false)
+        if (!HasAlivePlayer)
         {
             GD.PrintErr("Player object disappeared or died while transitioning to the editor");
             return;
@@ -301,26 +303,23 @@ public partial class MulticellularStage : CreatureStageBase<MulticellularCreatur
         // {
         // }
 
+        var lateMulticellularSpecies = Player.Get<LateMulticellularSpeciesMember>();
+
         // Spawn another cell from the player species
         // This is done first to ensure that the player colony is still intact for spawn separation calculation
-        var parent = Player!.SpawnOffspring();
-        parent.BecomeFullyGrown();
-
-        // Update the player's creature
-        Player.ApplySpecies(Player.Species);
-
-        // Reset all growth progress of the player
-        Player.ResetGrowth();
+        SpawnHelpers.SpawnMulticellularWithoutFinalizing(WorldSimulation, WorldSimulation.SpawnSystem,
+            lateMulticellularSpecies.Species, Player.Get<WorldPosition>(), out var parent, true);
 
         if (!CurrentGame!.TutorialState.Enabled)
         {
             // tutorialGUI.EventReceiver?.OnTutorialDisabled();
         }
 
+
         // Update state transition triggers
-        if (Player.Species.MulticellularType != previousPlayerStage)
+        if (lateMulticellularSpecies.Species.MulticellularType != previousPlayerStage)
         {
-            previousPlayerStage = Player.Species.MulticellularType;
+            previousPlayerStage = lateMulticellularSpecies.Species.MulticellularType;
 
             if (previousPlayerStage == MulticellularSpeciesType.Aware)
             {
@@ -334,7 +333,7 @@ public partial class MulticellularStage : CreatureStageBase<MulticellularCreatur
 
     public override void OnSuicide()
     {
-        Player?.Damage(9999.0f, "suicide");
+        Player.Get<Health>().Kill();
     }
 
     public void RotateCamera(float yawMovement, float pitchMovement)
@@ -348,18 +347,14 @@ public partial class MulticellularStage : CreatureStageBase<MulticellularCreatur
     /// </summary>
     public void TeleportToLand()
     {
-        if (Player == null)
+        if (HasPlayer)
         {
             GD.PrintErr("Player has disappeared");
             return;
         }
 
-        // Despawn everything except the player
-        foreach (Node child in rootOfDynamicallySpawned.GetChildren())
-        {
-            if (child != Player)
-                child.QueueFree();
-        }
+        // TODO: Despawn everything except the player
+        
 
         // And setup the land "environment"
 
@@ -456,16 +451,18 @@ public partial class MulticellularStage : CreatureStageBase<MulticellularCreatur
             tree.AddToGroup(Constants.INTERACTABLE_GROUP);
         }
 
-        // Modify player state for being on land
-        Player.MovementMode = MovementMode.Walking;
+        var playerPosition = Player.Get<WorldPosition>().Position;
 
-        if (Player.Position.Y <= 0)
+        // Modify player state for being on land
+        Player.Get<MulticellularControl>().MovementMode = MovementMode.Walking;
+
+        if (playerPosition.Y <= 0)
         {
-            Player.Position = new Vector3(Player.Position.X, 0.1f, Player.Position.Z);
+            playerPosition = new Vector3(playerPosition.X, 0.1f, playerPosition.Z);
         }
 
         // Modify the player species to be on land
-        Player.Species.ReproductionLocation = ReproductionLocation.Land;
+        Player.Get<LateMulticellularSpeciesMember>().Species.ReproductionLocation = ReproductionLocation.Land;
 
         // Fade back in after the "teleport"
         TransitionManager.Instance.AddSequence(ScreenFade.FadeType.FadeIn, 0.3f, null, false);
@@ -473,12 +470,12 @@ public partial class MulticellularStage : CreatureStageBase<MulticellularCreatur
 
     public void MoveToAwakeningStage()
     {
-        if (Player == null)
+        if (!HasPlayer)
             return;
 
         GD.Print("Moving player to awakening stage prototype");
 
-        Player.Species.MovePlayerToAwakenedStatus();
+        Player.Get<LateMulticellularSpeciesMember>().Species.MovePlayerToAwakenedStatus();
 
         // TODO: implement an "inspect" action for inspecting world objects that can unlock primitive
         // technologies
@@ -506,7 +503,7 @@ public partial class MulticellularStage : CreatureStageBase<MulticellularCreatur
             return;
 
         // TODO: we might in the future have somethings that an aware creature can interact with
-        if (Player == null || Player.Species.MulticellularType != MulticellularSpeciesType.Awakened)
+        if (!HasPlayer || Player.Get<LateMulticellularSpeciesMember>().Species.MulticellularType != MulticellularSpeciesType.Awakened)
             return;
 
         if (interactionPopup.SelectCurrentOptionIfOpen())
@@ -529,7 +526,7 @@ public partial class MulticellularStage : CreatureStageBase<MulticellularCreatur
 
     public void PerformBuildOrOpenMenu()
     {
-        if (Player == null || Player.Species.MulticellularType != MulticellularSpeciesType.Awakened)
+        if (!HasPlayer || Player.Get<LateMulticellularSpeciesMember>().Species.MulticellularType != MulticellularSpeciesType.Awakened)
             return;
 
         if (Player.IsPlacingStructure)
@@ -563,7 +560,7 @@ public partial class MulticellularStage : CreatureStageBase<MulticellularCreatur
 
     public bool TogglePlayerInventory()
     {
-        if (Player == null)
+        if (!HasPlayer)
             return false;
 
         if (HUD.IsInventoryOpen)
@@ -594,7 +591,7 @@ public partial class MulticellularStage : CreatureStageBase<MulticellularCreatur
 
     public void OnSocietyFounded(PlacedStructure societyCenter)
     {
-        if (Player == null || movingToSocietyStage || MovingToEditor)
+        if (!HasPlayer || movingToSocietyStage || MovingToEditor)
             return;
 
         GD.Print("Move to society stage triggered");

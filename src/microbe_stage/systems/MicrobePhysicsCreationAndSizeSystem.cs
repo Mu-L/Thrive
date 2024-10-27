@@ -30,7 +30,7 @@ using World = DefaultEcs.World;
 [WritesToComponent(typeof(CompoundAbsorber))]
 [ReadsComponent(typeof(OrganelleContainer))]
 [ReadsComponent(typeof(AttachedToEntity))]
-[RunsAfter(typeof(MicrobeVisualsSystem))]
+[RunsAfter(typeof(MulticellularVisualsSystem))]
 [RunsBefore(typeof(PhysicsBodyCreationSystem))]
 [RunsBefore(typeof(MicrobeReproductionSystem))]
 [RunsBefore(typeof(MulticellularGrowthSystem))]

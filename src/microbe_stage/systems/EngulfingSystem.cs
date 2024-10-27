@@ -53,7 +53,7 @@ using World = DefaultEcs.World;
 [ReadsComponent(typeof(EntityRadiusInfo))]
 [RunsAfter(typeof(ColonyCompoundDistributionSystem))]
 [RunsAfter(typeof(PilusDamageSystem))]
-[RunsAfter(typeof(MicrobeVisualsSystem))]
+[RunsAfter(typeof(MulticellularVisualsSystem))]
 [RunsBefore(typeof(SpatialAttachSystem))]
 [RuntimeCost(11)]
 [RunsOnMainThread]

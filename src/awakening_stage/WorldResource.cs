@@ -9,7 +9,7 @@ using ThriveScriptsShared;
 ///   A defined world resource
 /// </summary>
 [TypeConverter($"Saving.Serializers.{nameof(WorldResourceStringConverter)}")]
-public class WorldResource : IRegistryType, IPlayerReadableName
+public class WorldResource : IRegistryType, IPlayerReadableName, ICarryable
 {
     private readonly Lazy<PackedScene> worldRepresentation;
     private readonly Lazy<Texture2D> icon;

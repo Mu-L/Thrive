@@ -23,7 +23,7 @@ using Godot;
 [ReadsComponent(typeof(CellProperties))]
 [RunsBefore(typeof(MicrobeReproductionSystem))]
 [RunsBefore(typeof(MicrobePhysicsCreationAndSizeSystem))]
-[RunsBefore(typeof(MicrobeVisualsSystem))]
+[RunsBefore(typeof(MulticellularVisualsSystem))]
 public class EndosymbiontOrganelleSystem : AEntitySetSystem<float>
 {
     // TODO: https://github.com/Revolutionary-Games/Thrive/issues/4989

@@ -10,7 +10,7 @@ public interface IHarvestAction
     ///   can be called.
     /// </param>
     /// <returns>Null if can harvest, if not null then the first missing tool</returns>
-    public EquipmentCategory? CheckRequiredTool(ICollection<EquipmentCategory> availableTools);
+    public EquipmentCategory? CheckRequiredTool(EquipmentCategory equipment);
 
     public List<IInteractableEntity> PerformHarvest();
 }

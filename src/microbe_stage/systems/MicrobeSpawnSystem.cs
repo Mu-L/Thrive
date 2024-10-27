@@ -20,7 +20,7 @@ using Xoshiro.PRNG64;
 [RunsAfter(typeof(SpatialAttachSystem))]
 [RunsAfter(typeof(CountLimitedDespawnSystem))]
 [JsonObject(MemberSerialization.OptIn, IsReference = true)]
-public sealed class SpawnSystem : ISystem<float>, ISpawnSystem
+public sealed class MicrobeSpawnSystem : ISystem<float>, ISpawnSystem
 {
     private readonly EntitySet spawnedEntitiesSet;
 
@@ -71,7 +71,7 @@ public sealed class SpawnSystem : ISystem<float>, ISpawnSystem
     [JsonProperty]
     private HashSet<Vector2I> coordinatesSpawned = new();
 
-    public SpawnSystem(IWorldSimulation world)
+    public MicrobeSpawnSystem(IWorldSimulation world)
     {
         this.world = world;
         spawnedEntitiesSet = world.EntitySystem.GetEntities().With<Spawned>().With<WorldPosition>().AsSet();
@@ -85,7 +85,7 @@ public sealed class SpawnSystem : ISystem<float>, ISpawnSystem
     ///   Used to construct temporary instance to copy data from to the real instance when loading from a save
     /// </summary>
     [JsonConstructor]
-    public SpawnSystem(XoShiRo256starstar random)
+    public MicrobeSpawnSystem(XoShiRo256starstar random)
     {
         this.random = random;
 

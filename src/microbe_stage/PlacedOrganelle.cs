@@ -220,7 +220,7 @@ public class PlacedOrganelle : IPositionedOrganelle, ICloneable
     }
 
     /// <summary>
-    ///   Called by <see cref="MicrobeVisualsSystem"/> when graphics have been created for this organelle
+    ///   Called by <see cref="MulticellularVisualsSystem"/> when graphics have been created for this organelle
     /// </summary>
     /// <param name="visualsInstance">The graphics initialized from this organelle's type's specified scene</param>
     /// <param name="visualSceneData">Data related to this scene to access extra metadata</param>

@@ -399,7 +399,7 @@ public partial class MulticellularCreature : RigidBody3D, ISaveLoadedTracked, IC
     ///     Also the player when checking if a selected action is still allowed, will result in extra text lookups.
     ///   </para>
     /// </remarks>
-    public IEnumerable<(InteractionType Interaction, bool Enabled, string? TextOverride)> CalculatePossibleActions(
+    public IEnumerable<(InteractionType Interaction, bool Enabled, string? TextOverride)> CalculatePossibleActions(//
         IInteractableEntity target)
     {
         if (target.CanBeCarried)

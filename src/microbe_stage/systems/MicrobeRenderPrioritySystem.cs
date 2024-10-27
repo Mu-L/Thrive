@@ -23,7 +23,7 @@ using World = DefaultEcs.World;
 [With(typeof(OrganelleContainer))]
 [ReadsComponent(typeof(EntityMaterial))]
 [ReadsComponent(typeof(OrganelleContainer))]
-[RunsAfter(typeof(MicrobeVisualsSystem))]
+[RunsAfter(typeof(MulticellularVisualsSystem))]
 [RunsAfter(typeof(EntityMaterialFetchSystem))]
 [RuntimeCost(0.5f)]
 [RunsOnMainThread]
