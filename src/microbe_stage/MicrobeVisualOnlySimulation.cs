@@ -35,7 +35,7 @@ public sealed class MicrobeVisualOnlySimulation : WorldSimulation
     private MicrobeFlashingSystem microbeFlashingSystem = null!;
     private MicrobeRenderPrioritySystem microbeRenderPrioritySystem = null!;
     private MicrobeShaderSystem microbeShaderSystem = null!;
-    private MulticellularVisualsSystem microbeVisualsSystem = null!;
+    private MicrobeVisualsSystem microbeVisualsSystem = null!;
     private TintColourApplyingSystem tintColourApplyingSystem = null!;
 
 #pragma warning disable CA2213
