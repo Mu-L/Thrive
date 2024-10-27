@@ -19,10 +19,17 @@ public struct Inventory
 
     public int MaxInventorySize = 4;
 
+    /// <summary>
+    /// Set by InteractionSystem
+    /// </summary>
+    public Entity? InteractionTarget;
+
     public Inventory(int maxInventorySize, Dictionary<int, IInventoryItem> storedItems)
     {
         MaxInventorySize = maxInventorySize;
         StoredItems = storedItems;
+
+        InteractionTarget = null;
     }
 }
 

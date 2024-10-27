@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using AngleSharp.Common;
 using Components;
 using DefaultEcs;
 using Godot;
@@ -39,7 +40,6 @@ public partial class MulticellularStage : CreatureStageBase<Entity, Multicellula
     private ISpawnSystem dummySpawner = null!;
 
 #pragma warning disable CA2213
-    private InteractableSystem interactableSystem = null!;
     private InteractablePopup interactionPopup = null!;
 
     private ProgressBarSystem progressBarSystem = null!;
@@ -115,7 +115,6 @@ public partial class MulticellularStage : CreatureStageBase<Entity, Multicellula
 
         // HoverInfo.Init(Camera, Clouds);
 
-        interactableSystem.Init(PlayerCamera.CameraNode, rootOfDynamicallySpawned);
         interactionPopup.OnInteractionSelectedHandler += ForwardInteractionSelectionToPlayer;
 
         progressBarSystem.Init(PlayerCamera.CameraNode, rootOfDynamicallySpawned);
@@ -133,7 +132,6 @@ public partial class MulticellularStage : CreatureStageBase<Entity, Multicellula
         HUD = GetNode<MulticellularHUD>("MulticellularHUD");
         HoverInfo = GetNode<PlayerInspectInfo>("PlayerLookingAtInfo");
 
-        interactableSystem = GetNode<InteractableSystem>(InteractableSystemPath);
         interactionPopup = GetNode<InteractablePopup>(InteractionPopupPath);
         progressBarSystem = GetNode<ProgressBarSystem>(ProgressBarSystemPath);
         selectBuildingPopup = GetNode<SelectBuildingPopup>(SelectBuildingPopupPath);
@@ -166,17 +164,6 @@ public partial class MulticellularStage : CreatureStageBase<Entity, Multicellula
         if (HasPlayer)
         {
             var playerPosition = Player.Get<WorldPosition>().Position;
-
-            if (Player.Get<LateMulticellularSpeciesMember>().Species.MulticellularType == MulticellularSpeciesType.Awakened)
-            {
-                // TODO: player interaction reach modifier from the species
-                interactableSystem.UpdatePlayerPosition(playerPosition, 0);
-                interactableSystem.SetActive(true);
-            }
-            else
-            {
-                interactableSystem.SetActive(false);
-            }
 
             progressBarSystem.UpdatePlayerPosition(playerPosition);
         }
@@ -503,13 +490,15 @@ public partial class MulticellularStage : CreatureStageBase<Entity, Multicellula
             return;
 
         // TODO: we might in the future have somethings that an aware creature can interact with
-        if (!HasPlayer || Player.Get<LateMulticellularSpeciesMember>().Species.MulticellularType != MulticellularSpeciesType.Awakened)
+        if (!HasPlayer || Player.Get<LateMulticellularSpeciesMember>().Species.MulticellularType != MulticellularSpeciesType.Awakened || !Player.Has<Inventory>())
             return;
 
         if (interactionPopup.SelectCurrentOptionIfOpen())
             return;
 
-        var target = interactableSystem.GetInteractionTarget();
+        var inventory = Player.Get<Inventory>();
+
+        var target = inventory.InteractionTarget;
 
         if (target == null)
         {
@@ -518,8 +507,10 @@ public partial class MulticellularStage : CreatureStageBase<Entity, Multicellula
             return;
         }
 
+        var possibleActions = InventoryAndInteractionHelpers.CalculatePossibleActions(Player, (Entity)target);
+
         // Show interaction context menu for the player to do something with the target
-        interactionPopup.ShowForInteractable(target, Player.CalculatePossibleActions(target));
+        interactionPopup.ShowForInteractable(target, possibleActions);
 
         // TODO: somehow refresh the inventory screen if it is open and the player decided to do a pick up action
     }
@@ -771,16 +762,15 @@ public partial class MulticellularStage : CreatureStageBase<Entity, Multicellula
         if (HasPlayer || movingToSocietyStage)
             return;
 
-        Player = SpawnHelpers.SpawnCreature(GameWorld.PlayerSpecies, new Vector3(0, 0, 0),
-            rootOfDynamicallySpawned, SpawnHelpers.LoadMulticellularScene(), false, dummySpawner, CurrentGame!);
+        var spawnLocation = new Vector3(0, 60, 0);
 
-        Player.OnDeath = OnPlayerDied;
+        SpawnHelpers.SpawnMulticellularWithoutFinalizing(WorldSimulation, WorldSimulation.SpawnSystem, GameWorld.PlayerSpecies,
+            spawnLocation, false, out var entityRecord);
 
-        Player.OnReproductionStatus = OnPlayerReproductionStatusChanged;
-
-        Player.RequestCraftingInterfaceFor = OnOpenCraftingInterfaceFor;
-
-        PlayerCamera.FollowedNode = Player;
+        entityRecord.Set(new MicrobeEventCallbacks
+        {
+            OnReproductionStatus = OnPlayerReproductionStatusChanged,
+        });
 
         // spawner.DespawnAll();
 
@@ -856,17 +846,17 @@ public partial class MulticellularStage : CreatureStageBase<Entity, Multicellula
     }
 
     [DeserializedCallbackAllowed]
-    private void OnPlayerReproductionStatusChanged(MulticellularCreature player, bool ready)
+    private void OnPlayerReproductionStatusChanged(Entity player, bool ready)
     {
         OnCanEditStatusChanged(ready);
     }
 
-    private void ForwardInteractionSelectionToPlayer(IInteractableEntity entity, InteractionType interactionType)
+    private void ForwardInteractionSelectionToPlayer(Entity entity, Entity target, InteractionType interactionType)
     {
-        if (Player == null)
+        if (!HasAlivePlayer)
             return;
 
-        if (!Player.AttemptInteraction(entity, interactionType))
+        if (!InventoryAndInteractionHelpers.AttemptInteraction(entity, target, interactionType)
             GD.Print("Player couldn't perform the selected action");
     }
 

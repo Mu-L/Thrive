@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel;
+using Components;
+using DefaultEcs;
 using Godot;
 using Container = Godot.Container;
 
@@ -31,12 +33,12 @@ public partial class InteractablePopup : Control
     private Label extraInfoLabel = null!;
 #pragma warning restore CA2213
 
-    private IInteractableEntity? openedFor;
+    private Entity? openedFor;
 
     /// <summary>
     ///   Godot can't handle this interface type to be passed through its signals, so we use a native C# signal here
     /// </summary>
-    public delegate void OnInteractionSelected(IInteractableEntity entity, InteractionType interactionType);
+    public delegate void OnInteractionSelected(Entity entity, Entity target, InteractionType interactionType);
 
     public OnInteractionSelected? OnInteractionSelectedHandler { get; set; }
 
@@ -51,12 +53,15 @@ public partial class InteractablePopup : Control
         Visible = true;
     }
 
-    public void ShowForInteractable(IInteractableEntity entity,
+    public void ShowForInteractable(Entity? target,
         IEnumerable<(InteractionType Interaction, bool Enabled, string? TextOverride)> availableInteractions)
     {
-        openedFor = entity;
+        if (target == null)
+            return;
 
-        var extraText = openedFor.ExtraInteractionPopupDescription;
+        openedFor = target;
+
+        var extraText = "abc";
 
         if (!string.IsNullOrEmpty(extraText))
         {
@@ -95,13 +100,16 @@ public partial class InteractablePopup : Control
                 continue;
             }
 
-            button.Connect(BaseButton.SignalName.Pressed, Callable.From(() => OptionSelected(interactionType)));
+            button.Connect(BaseButton.SignalName.Pressed, Callable.From(() => OptionSelected(target.Value, interactionType)));
 
             firstButton ??= button;
         }
 
-        popup.WindowTitle = entity.ReadableName;
-        popup.PopupCenteredShrink();
+        if (target.Value.Has<ReadableName>())
+        {
+            popup.WindowTitle = target.Value.Get<ReadableName>().Name.ToString();
+            popup.PopupCenteredShrink();
+        }
 
         if (firstButton == null)
         {
@@ -159,7 +167,7 @@ public partial class InteractablePopup : Control
         base.Dispose(disposing);
     }
 
-    private void OptionSelected(InteractionType interactionType)
+    private void OptionSelected(Entity target, InteractionType interactionType)
     {
         if (openedFor == null)
         {
@@ -170,6 +178,6 @@ public partial class InteractablePopup : Control
         GUICommon.Instance.PlayButtonPressSound();
         popup.Hide();
 
-        OnInteractionSelectedHandler?.Invoke(openedFor, interactionType);
+        OnInteractionSelectedHandler?.Invoke(openedFor.Value, target, interactionType);
     }
 }

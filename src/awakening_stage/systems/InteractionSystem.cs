@@ -51,7 +51,7 @@ public sealed class InteractionSystem : AEntitySetSystem<float>
     {
         var potentialInteractables = World.GetEntities().With<Interactable>().AsEnumerable();
 
-        Entity? closestInteractable;
+        Entity? closestInteractable = null;
         float closestDistance = Constants.INTERACTION_MAX_DISTANCE;
 
         foreach (var potentialInteractable in potentialInteractables)
@@ -69,8 +69,6 @@ public sealed class InteractionSystem : AEntitySetSystem<float>
             }
         }
 
-        // HELP
-
-
+        entity.Get<Inventory>().InteractionTarget = closestInteractable;
     }
 }
