@@ -56,9 +56,14 @@ public static class InventoryAndInteractionHelpers
             foreach (var inventoryItem in inventory.StoredItems.Values)
             {
                 // FIX NEEDED HERE
-                if (inventoryItem is Equipment equipment)
+                if (inventoryItem is InventoryEquipment equipment)
                 {
-                    var canHarvest = target.Get<Harvestable>().CanHarvest(equipment.Definition.Category);
+                    var message = Localization.Translate("INTERACTION_HARVEST_CANNOT_MISSING_TOOL");
+
+                    if (equipment.Definition == null)
+                        yield return (InteractionType.Harvest, false, message);
+
+                    var canHarvest = target.Get<Harvestable>().CanHarvest(equipment.Definition!.Category);
 
                     if (canHarvest)
                     {
@@ -66,8 +71,6 @@ public static class InventoryAndInteractionHelpers
                     }
                     else
                     {
-                        var message = Localization.Translate("INTERACTION_HARVEST_CANNOT_MISSING_TOOL");
-
                         yield return (InteractionType.Harvest, false, message);
                     }
                 }
@@ -127,7 +130,7 @@ public static class InventoryAndInteractionHelpers
         switch (interactionType)
         {
             case InteractionType.Pickup:
-                return inventory.PickupItem(ref target);
+                return inventory.PickupItem(ref entity, ref target);
             case InteractionType.Harvest:
             {
                 if (!target.Has<Harvestable>())
@@ -185,11 +188,37 @@ public static class InventoryAndInteractionHelpers
         }
     }
 
-    public static bool PickupItem(this ref Inventory inventory, ref Entity target)
+    public static bool PickupItem(this ref Inventory inventory, ref Entity entity, ref Entity target)
     {
-        if (!target.Has<EntityItem>())
+        if (!target.Has<Item>())
             return false;
 
-        target.Get<EntityItem>().Item
+        var item = target.Get<Item>();
+
+        if (inventory.StoredItems.Count >= inventory.MaxInventorySize)
+            return false;
+
+        // Always replace with hand item. Design choice :)
+        if (inventory.StoredItems.TryGetValue(0, out var alreadyHeldItem))
+            inventory.DropItem(ref entity, 0);
+
+        inventory.StoredItems.Add(0, item.CorrespondingItem);
+
+        return true;
+    }
+
+    public static void DropItem(this ref Inventory inventory, ref Entity entity, int slot)
+    {
+        inventory.StoredItems.TryGetValue(slot, out var item);
+
+        if (item == null)
+            return;
+
+        var resourceScene = SpawnHelpers.LoadResourceEntityScene();
+
+        // ???
+        //SpawnHelpers.SpawnResourceEntity(item.ResourceFromItem(), new Transform3D(Basis.Identity, entity.Get<WorldPosition>().Position), ???????, resourceScene);
+
+        inventory.StoredItems.Remove(slot);
     }
 }

@@ -16,7 +16,7 @@ public static class InventoryItemHelpers
 {
     public static WorldResource? ResourceFromItem(this IInventoryItem item)
     {
-        if (item is ResourceEntity resourceEntity)
+        if (item is InventoryResource resourceEntity)
         {
             return resourceEntity.ResourceType ?? throw new Exception("World resource with no type set");
         }

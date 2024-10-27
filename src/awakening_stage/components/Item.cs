@@ -22,6 +22,6 @@ public struct Item
 
     public Item(IInventoryItem item)
     {
-        Item = item;
+        CorrespondingItem = item;
     }
 }

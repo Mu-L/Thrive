@@ -850,7 +850,7 @@ public static class SpawnHelpers
         }
         else
         {
-            throw new NotSupportedException("Unknown species type to spawn a microbe from");
+            throw new NotSupportedException("Unknown species type to spawn a creature from");
         }
 
         var bioProcesses = new BioProcesses
@@ -907,9 +907,6 @@ public static class SpawnHelpers
         entity.Set(new Health(100));
 
         entity.Set<StrainAffected>();
-
-        // Selecting is used to throw out specific colony members
-        entity.Set<Selectable>();
 
         entity.Set(new ReadableName(new LocalizedString(species.FormattedName)));
 
@@ -980,40 +977,12 @@ public static class SpawnHelpers
         clouds.AddCloud(compound, amount, location + new Vector3(0, 0, 0));
     }
 
-    public static MulticellularCreature SpawnCreature(Species species, Vector3 location,
-        Node worldRoot, PackedScene multicellularScene, bool aiControlled, ISpawnSystem spawnSystem,
-        GameProperties currentGame)
-    {
-        var creature = multicellularScene.Instantiate<MulticellularCreature>();
-
-        // The second parameter is (isPlayer), and we assume that if the
-        // cell is not AI controlled it is the player's cell
-        creature.Init(spawnSystem, currentGame, !aiControlled);
-
-        worldRoot.AddChild(creature);
-        creature.Position = location;
-
-        creature.AddToGroup(Constants.ENTITY_TAG_CREATURE);
-        creature.AddToGroup(Constants.PROGRESS_ENTITY_GROUP);
-
-        if (aiControlled)
-        {
-            // TODO: AI
-        }
-
-        creature.ApplySpecies(species);
-        creature.ApplyMovementModeFromSpecies();
-
-        creature.SetInitialCompounds();
-        return creature;
-    }
-
     public static PackedScene LoadMulticellularScene()
     {
         return GD.Load<PackedScene>("res://src/late_multicellular_stage/MulticellularCreature.tscn");
     }
 
-    public static ResourceEntity SpawnResourceEntity(WorldResource resourceType, Transform3D location, Node worldNode,
+    public static InventoryResource SpawnResourceEntity(WorldResource resourceType, Transform3D location, Node worldNode,
         PackedScene entityScene, bool randomizeRotation = false, Random? random = null)
     {
         var resourceEntity = CreateHarvestedResourceEntity(resourceType, entityScene, false);
@@ -1029,9 +998,7 @@ public static class SpawnHelpers
                 location.Origin);
         }
 
-        worldNode.AddChild(resourceEntity);
-
-        resourceEntity.Transform = location;
+        
 
         return resourceEntity;
     }
@@ -1040,24 +1007,18 @@ public static class SpawnHelpers
     ///   Creates a resource entity to be placed in the world later. Used for example to create items to drop.
     /// </summary>
     /// <returns>The entity ready to be placed in the world</returns>
-    public static ResourceEntity CreateHarvestedResourceEntity(WorldResource resourceType, PackedScene entityScene,
+    public static InventoryResource CreateHarvestedResourceEntity(WorldResource resourceType, PackedScene entityScene,
         bool randomizeRotation = true, Random? random = null)
     {
-        var resourceEntity = entityScene.Instantiate<ResourceEntity>();
-
-        // Apply settings
-        resourceEntity.SetResource(resourceType);
-
         if (randomizeRotation)
         {
             random ??= new XoShiRo128plus();
 
-            resourceEntity.Transform =
-                new Transform3D(new Basis(RandomRotationForResourceEntity(random)), Vector3.Zero);
+           // resourceEntity.Transform =
+            //    new Transform3D(new Basis(RandomRotationForResourceEntity(random)), Vector3.Zero);
         }
 
-        resourceEntity.AddToGroup(Constants.INTERACTABLE_GROUP);
-        return resourceEntity;
+        return new InventoryResource();
     }
 
     public static PackedScene LoadResourceEntityScene()
@@ -1065,11 +1026,10 @@ public static class SpawnHelpers
         return GD.Load<PackedScene>("res://src/awakening_stage/ResourceEntity.tscn");
     }
 
-    public static IInteractableEntity CreateEquipmentEntity(EquipmentDefinition equipmentDefinition)
+    public static InventoryEquipment CreateEquipmentEntity(EquipmentDefinition equipmentDefinition)
     {
-        var entity = new Equipment(equipmentDefinition);
+        var entity = new InventoryEquipment();
 
-        entity.AddToGroup(Constants.INTERACTABLE_GROUP);
         return entity;
     }
 

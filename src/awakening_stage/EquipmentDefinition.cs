@@ -15,7 +15,7 @@ using ThriveScriptsShared;
 ///   </para>
 /// </remarks>
 [TypeConverter($"Saving.Serializers.{nameof(EquipmentDefinitionStringConverter)}")]
-public class EquipmentDefinition : IRegistryType, ICarryable
+public class EquipmentDefinition : IRegistryType
 {
     private readonly Lazy<PackedScene> worldRepresentation;
     private readonly Lazy<Texture2D> icon;

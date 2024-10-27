@@ -12,9 +12,10 @@ using Newtonsoft.Json;
 [JSONAlwaysDynamicType]
 [SceneLoadedClass("res://src/late_multicellular_stage/MulticellularCreature.tscn", UsesEarlyResolve = false)]
 [DeserializedCallbackTarget]
-public partial class MulticellularCreature : RigidBody3D, ISaveLoadedTracked, ICharacterInventory, IEntity,
-    IStructureSelectionReceiver<StructureDefinition>, IActionProgressSource
+public partial class MulticellularCreature : RigidBody3D//, ISaveLoadedTracked, IEntity,
+    //IStructureSelectionReceiver<StructureDefinition>, IActionProgressSource
 {
+    /*
     private static readonly Vector3 SwimUpForce = new(0, 10, 0);
 
     [JsonProperty]
@@ -344,7 +345,7 @@ public partial class MulticellularCreature : RigidBody3D, ISaveLoadedTracked, IC
 
         // TODO: implement sound playing, should probably create a helper method to share with Microbe
 
-        /*// Find a player not in use or create a new one if none are available.
+        // Find a player not in use or create a new one if none are available.
         var player = otherAudioPlayers.Find(p => !p.Playing);
 
         if (player == null)
@@ -363,7 +364,7 @@ public partial class MulticellularCreature : RigidBody3D, ISaveLoadedTracked, IC
 
         player.VolumeDb = MathF.LinearToDb(volume);
         player.Stream = sound;
-        player.Play();*/
+        player.Play();
     }
 
     public void SwimUpOrJump(double delta)
@@ -385,283 +386,6 @@ public partial class MulticellularCreature : RigidBody3D, ISaveLoadedTracked, IC
     {
         // TODO: crouching
         targetSwimLevel -= upDownSwimSpeed * (float)delta;
-    }
-
-    /// <summary>
-    ///   Calculates the actions this creature can do on a target object
-    /// </summary>
-    /// <param name="target">The object to potentially do something for</param>
-    /// <returns>Enumerator of the possible actions</returns>
-    /// <remarks>
-    ///   <para>
-    ///     TODO: Somehow make sure when the AI can use this to that the text overrides don't need to be generated
-    ///     as those will waste performance for no reason. Maybe we just need two variants of the method?
-    ///     Also the player when checking if a selected action is still allowed, will result in extra text lookups.
-    ///   </para>
-    /// </remarks>
-    public IEnumerable<(InteractionType Interaction, bool Enabled, string? TextOverride)> CalculatePossibleActions(//
-        IInteractableEntity target)
-    {
-        if (target.CanBeCarried)
-        {
-            bool full = !FitsInCarryingCapacity(target);
-            yield return (InteractionType.Pickup, !full,
-                full ? Localization.Translate("INTERACTION_PICK_UP_CANNOT_FULL") : null);
-        }
-
-        if (target is ResourceEntity)
-        {
-            // Assume all resources can be used in some kind of crafting
-            yield return (InteractionType.Craft, true, null);
-        }
-
-        var harvesting = target.GetHarvestingInfo();
-
-        if (harvesting != null)
-        {
-            var availableTools = this.GetAllCategoriesOfEquippedItems();
-
-            // Do we have the required tools
-            var missingTool = harvesting.CheckRequiredTool(availableTools);
-            if (missingTool == null)
-            {
-                yield return (InteractionType.Harvest, true, null);
-            }
-            else
-            {
-                var message = Localization.Translate("INTERACTION_HARVEST_CANNOT_MISSING_TOOL").FormatSafe(
-                    Localization.Translate(missingTool.GetAttribute<DescriptionAttribute>().Description));
-
-                yield return (InteractionType.Harvest, false, message);
-            }
-        }
-
-        if (target is IAcceptsResourceDeposit { DepositActionAllowed: true } deposit)
-        {
-            bool takesItems = deposit.GetWantedItems(this) != null;
-
-            yield return (InteractionType.DepositResources, takesItems,
-                takesItems ?
-                    null :
-                    Localization.Translate("INTERACTION_DEPOSIT_RESOURCES_NO_SUITABLE_RESOURCES"));
-        }
-
-        if (target is IConstructable { Completed: false } constructable)
-        {
-            bool canBeBuilt = constructable.HasRequiredResourcesToConstruct;
-
-            yield return (InteractionType.Construct, canBeBuilt,
-                canBeBuilt ?
-                    null :
-                    Localization.Translate("INTERACTION_CONSTRUCT_MISSING_DEPOSITED_MATERIALS"));
-        }
-
-        // Add the extra interactions the entity provides
-        var extraInteractions = target.GetExtraAvailableActions();
-
-        if (extraInteractions != null)
-        {
-            foreach (var (interaction, disabledText) in extraInteractions)
-            {
-                yield return (interaction, disabledText == null, disabledText);
-            }
-        }
-    }
-
-    public bool AttemptInteraction(IInteractableEntity target, InteractionType interactionType)
-    {
-        // Make sure action is allowed first
-        if (!CalculatePossibleActions(target).Any(t => t.Enabled && t.Interaction == interactionType))
-            return false;
-
-        // Then perform it
-        switch (interactionType)
-        {
-            case InteractionType.Pickup:
-                return PickupItem(target);
-            case InteractionType.Harvest:
-                return this.HarvestEntity(target);
-            case InteractionType.Craft:
-            {
-                if (RequestCraftingInterfaceFor == null)
-                {
-                    // AI should directly use the crafting methods to create the crafter products
-                    GD.PrintErr(
-                        $"Only player creature can open crafting ({nameof(RequestCraftingInterfaceFor)} is unset)");
-                    return false;
-                }
-
-                // Request the crafting interface to be opened with the target pre-selected
-                RequestCraftingInterfaceFor.Invoke(this, target);
-                return true;
-            }
-
-            case InteractionType.DepositResources:
-            {
-                // TODO: instead of closing, just update the interaction popup to allow finishing construction
-                // immediately
-                if (target is IAcceptsResourceDeposit deposit)
-                {
-                    if (!deposit.AutoTakesResources)
-                    {
-                        // TODO: allow selecting items
-                        GD.Print("TODO: selecting items to deposit interface is not done");
-                    }
-
-                    var itemsToDeposit = deposit.GetWantedItems(this);
-
-                    if (itemsToDeposit != null)
-                    {
-                        var slots = itemsToDeposit.ToList();
-                        deposit.DepositItems(slots.Select(i => i.ContainedItem).WhereNotNull());
-
-                        foreach (var slot in slots)
-                        {
-                            if (!DeleteItem(slot))
-                                GD.PrintErr("Failed to delete deposited item");
-                        }
-
-                        return true;
-                    }
-                }
-
-                GD.PrintErr("Deposit action failed due to bad target or currently held items");
-                return false;
-            }
-
-            case InteractionType.Construct:
-            {
-                if (target is IConstructable { Completed: false, HasRequiredResourcesToConstruct: true } constructable)
-                {
-                    // Start action for constructing, the action when finished will pick what it does based on the
-                    // target entity
-                    StartAction(target, constructable.TimedActionDuration);
-                    return true;
-                }
-
-                return false;
-            }
-
-            default:
-            {
-                // This might be an extra interaction
-                var extraInteractions = target.GetExtraAvailableActions();
-
-                if (extraInteractions != null)
-                {
-                    foreach (var (extraInteraction, _) in extraInteractions)
-                    {
-                        if (extraInteraction == interactionType)
-                            return target.PerformExtraAction(extraInteraction);
-                    }
-                }
-
-                // Unknown action type and not an extra action provided by the target
-                GD.PrintErr($"Unimplemented action handling for {interactionType}");
-                return false;
-            }
-        }
-    }
-
-    public bool FitsInCarryingCapacity(IInteractableEntity interactableEntity)
-    {
-        return this.HasEmptySlot();
-    }
-
-    /// <summary>
-    ///   Pickup item to the first available slot
-    /// </summary>
-    public bool PickupItem(IInteractableEntity item)
-    {
-        // Find an empty slot to put the thing in
-        // Prefer hand slots
-        foreach (var slot in inventorySlots.Prepend(handSlot))
-        {
-            if (slot.ContainedItem == null)
-            {
-                return PickUpItem(item, slot.Id);
-            }
-        }
-
-        // No empty slots
-        return false;
-    }
-
-    public bool PickUpItem(IInteractableEntity item, int slotId)
-    {
-        // Find the slot to put the item in
-        if (handSlot.Id == slotId)
-            return PickupToSlot(item, handSlot);
-
-        foreach (var slot in inventorySlots)
-        {
-            if (slot.Id == slotId)
-                return PickupToSlot(item, slot);
-        }
-
-        return false;
-    }
-
-    public void DropAll()
-    {
-        var thingsToDrop = this.ListAllItems().Select(s => s.ContainedItem).WhereNotNull().ToList();
-
-        foreach (var entity in thingsToDrop)
-        {
-            // TODO: the missing check that the dropped position is free of other physics objects is really going to be
-            // a problem here
-            DropItem(entity);
-        }
-    }
-
-    public bool DropItem(IInteractableEntity item)
-    {
-        var slot = this.SlotWithItem(item);
-
-        if (slot == null)
-        {
-            GD.PrintErr("Trying to drop item we can't find in our inventory slots");
-            return false;
-        }
-
-        if (!carriedObjects.Remove(item))
-        {
-            // We weren't carrying that
-            GD.PrintErr("Can't drop something creature isn't carrying");
-            return false;
-        }
-
-        var entityNode = item.EntityNode;
-
-        HandleEntityDrop(item, entityNode);
-
-        slot.ContainedItem = null;
-
-        return true;
-    }
-
-    public bool DeleteItem(int slotId)
-    {
-        var slot = this.SlotWithId(slotId);
-
-        if (slot == null)
-        {
-            GD.Print("Trying to delete item in non-existent slot");
-            return false;
-        }
-
-        return DeleteItem(slot);
-    }
-
-    public bool DeleteItem(InventorySlotData slot)
-    {
-        if (slot.ContainedItem == null)
-            return false;
-
-        slot.ContainedItem.DestroyAndQueueFree();
-
-        slot.ContainedItem = null;
-        return true;
     }
 
     public bool DeleteWorldEntity(IInteractableEntity entity)
@@ -695,20 +419,6 @@ public partial class MulticellularCreature : RigidBody3D, ISaveLoadedTracked, IC
         // TODO: non-hand equipment slots should only take equipment of the right type
 
         return true;
-    }
-
-    public void MoveItemSlots(int fromSlotId, int toSlotId)
-    {
-        var from = this.SlotWithId(fromSlotId) ?? throw new ArgumentException("Invalid from slot");
-        var to = this.SlotWithId(toSlotId) ?? throw new ArgumentException("Invalid to slot");
-
-        (from.ContainedItem, to.ContainedItem) = (to.ContainedItem, from.ContainedItem);
-
-        if (from.ContainedItem != null)
-            SetItemPositionInSlot(from, from.ContainedItem.EntityNode);
-
-        if (to.ContainedItem != null)
-            SetItemPositionInSlot(to, to.ContainedItem.EntityNode);
     }
 
     public void CancelCurrentAction()
@@ -748,6 +458,7 @@ public partial class MulticellularCreature : RigidBody3D, ISaveLoadedTracked, IC
         // TODO: disallow placing when overlaps with physics objects (and show ghost with red tint)
     }
 
+    
     public void AttemptStructurePlace()
     {
         if (buildingTypeToPlace == null)
@@ -977,4 +688,5 @@ public partial class MulticellularCreature : RigidBody3D, ISaveLoadedTracked, IC
         var worldTransform = new Transform3D(new Basis(rotation), transform.Origin + rotation * relative);
         return worldTransform;
     }
+    */
 }

@@ -628,6 +628,8 @@ public static class Constants
 
     public const float INTERACTION_BUTTONS_FULL_UPDATE_INTERVAL = 0.1f;
 
+    public const float INTERACTION_MAX_DISTANCE = 2000;
+
     public const int INTERACTION_BUTTONS_MAX_COUNT = 50;
 
     public const float INTERACTION_BUTTON_DEFAULT_Y_OFFSET = 1.0f;
