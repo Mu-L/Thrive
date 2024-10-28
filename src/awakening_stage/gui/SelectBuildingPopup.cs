@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using DefaultEcs;
 using Godot;
 
 /// <summary>
@@ -18,9 +19,8 @@ public partial class SelectBuildingPopup : StructureToBuildPopupBase<StructureDe
     ///   Object receiving the selected structure. This is used instead of signals to allow passing a C# object that is
     ///   not necessarily a Godot object.
     /// </param>
-    /// <param name="availableResources">Available resources to determine which structures are buildable</param>
     public void OpenWithStructures(IEnumerable<StructureDefinition> availableStructures,
-        IStructureSelectionReceiver<StructureDefinition> selectionReceiver, IAggregateResourceSource availableResources)
+        Entity entity)
     {
         validDefinitions.Clear();
         validDefinitions.AddRange(availableStructures);

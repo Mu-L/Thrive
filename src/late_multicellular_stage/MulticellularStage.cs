@@ -302,7 +302,6 @@ public partial class MulticellularStage : CreatureStageBase<Entity, Multicellula
             // tutorialGUI.EventReceiver?.OnTutorialDisabled();
         }
 
-
         // Update state transition triggers
         if (lateMulticellularSpecies.Species.MulticellularType != previousPlayerStage)
         {
@@ -341,7 +340,6 @@ public partial class MulticellularStage : CreatureStageBase<Entity, Multicellula
         }
 
         // TODO: Despawn everything except the player
-        
 
         // And setup the land "environment"
 
@@ -520,19 +518,24 @@ public partial class MulticellularStage : CreatureStageBase<Entity, Multicellula
         if (!HasPlayer || Player.Get<LateMulticellularSpeciesMember>().Species.MulticellularType != MulticellularSpeciesType.Awakened)
             return;
 
-        if (Player.IsPlacingStructure)
+        if (!Player.Has<StructureConstructor>())
+            return;
+
+        ref var constructor = ref Player.Get<StructureConstructor>();
+
+        if (constructor.CurrentlyPlacedStructure != null)
         {
             if (PauseManager.Instance.Paused)
                 return;
 
-            Player.AttemptStructurePlace();
+            constructor.AttemptStructurePlace();
             return;
         }
 
         if (pauseMenu.Visible)
             return;
 
-        selectBuildingPopup.OpenWithStructures(CurrentGame!.TechWeb.GetAvailableStructures(), Player, Player);
+        selectBuildingPopup.OpenWithStructures(CurrentGame!.TechWeb.GetAvailableStructures(), Player);
 
         // TODO: when a structure is being placed, should we have some kind of indicator on screen what to press to
         // cancel?

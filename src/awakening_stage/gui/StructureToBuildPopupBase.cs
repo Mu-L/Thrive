@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Text;
+using DefaultEcs;
 using Godot;
 
 /// <summary>
@@ -30,7 +31,7 @@ public partial class StructureToBuildPopupBase<TSelection> : Control
     protected PackedScene richTextScene = null!;
 #pragma warning restore CA2213
 
-    protected IStructureSelectionReceiver<TSelection>? receiver;
+    protected Entity? receiver;
 
     protected StructureToBuildPopupBase()
     {
