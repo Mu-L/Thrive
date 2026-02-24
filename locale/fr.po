@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2026-02-23 12:21+0100\n"
-"PO-Revision-Date: 2026-02-20 12:35+0000\n"
+"PO-Revision-Date: 2026-02-23 14:25+0000\n"
 "Last-Translator: Shigasaa <altitudes.etrangeres@ikmail.com>\n"
 "Language-Team: French <https://translate.revolutionarygamesstudio.com/projects/thrive/thrive-game/fr/>\n"
 "Language: fr\n"
@@ -962,8 +962,9 @@ msgstr "Saturation de la couleur (proportion de gris)"
 msgid "COLOUR_PICKER_V_TOOLTIP"
 msgstr "Luminosité ou intensité de la couleur"
 
+#, fuzzy
 msgid "COMMAND_INPUT_LINE_EDIT"
-msgstr ""
+msgstr "Entrer une commande"
 
 msgid "COMMON_ABILITIES"
 msgstr "Capacités communes"
@@ -8099,7 +8100,7 @@ msgstr ""
 "[indent]—   Contient de la [b][color=#3796e1][url=thriveopedia:rusticyanin]Rusticyanine[/url][/color][/b] durant minimum [b]6[/b] générations à la suite.[/indent]"
 
 msgid "WIKI_FERROPLAST_SCIENTIFIC_BACKGROUND"
-msgstr ""
+msgstr "Les [b]ferroplastes[/b] n'ont pas été observés sur Terre, mais on pense qu'ils sont tout a fait plausibles compte tenu de l'évolution des endosymbiotes (comme les [b][color=#3796e1][url=thriveopedia:mitochondrion]mitochondries[/url][/color][/b]) et de l'existence de microbes ferro-oxydants tels que la bactérie [i]<a rel=\"nofollow\" class=\"external text\" href=\"https://fr.wikipedia.org/wiki/Acidithiobacillus_ferrooxidans\">Acidithiobacillus ferrooxidans</a>[/i] et au genre archéal [i]<a rel=\"nofollow\" class=\"external text\" href=\"https://fr.wikipedia.org/wiki/Ferroplasma\">Ferroplasma</a>[/i]. Ces microbes expriment des protéines appelées [b][color=#3796e1][url=thriveopedia:rusticyanin]rusticyanines (en)[/url][/color][/b], qui oxydent les ions ferreux (Fe<sup>2+</sup>) en ions ferriques (Fe<sup>3+</sup>) pour récolter des protons dans le cadre d'une [color=#3796e1][url=https://fr.wikipedia.org/wiki/Cha%C3%AEne_de_transport_d%27%C3%A9lectrons] chaine de transport d'électrons[/url][/color]."
 
 #, fuzzy
 msgid "WIKI_FERROPLAST_STRATEGY"
