@@ -806,7 +806,9 @@ public partial class CellEditorComponent
         // the warnings (once they are done)
         if (!IsMulticellularEditor)
         {
-            var tolerances = CalculateRawTolerances();
+            // We exclude bonuses here so that the warnings display doesn't have a partial line about a debuff and then
+            // inexplicably also a bonus percentage as that would be very confusing to see.
+            var tolerances = CalculateRawTolerances(true);
 
             void AddToleranceWarning(string text)
             {

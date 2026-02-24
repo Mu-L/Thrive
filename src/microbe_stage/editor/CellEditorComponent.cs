@@ -2114,10 +2114,19 @@ public partial class CellEditorComponent :
         return MicrobeEnvironmentalToleranceCalculations.ResolveToleranceValues(CalculateRawTolerances());
     }
 
-    private ToleranceResult CalculateRawTolerances()
+    /// <summary>
+    ///   Calculates the plain tolerance result with the current organelles and edited tolerances.
+    /// </summary>
+    /// <param name="excludePositiveBuffs">
+    ///   If set to true, perfect adaptation bonuses will be excluded from the result. This is used to display
+    ///   tolerance-related debuffs in a more sensible way where partial bonuses are not allowed to leak into the
+    ///   results.
+    /// </param>
+    /// <returns>The calculated tolerance values</returns>
+    private ToleranceResult CalculateRawTolerances(bool excludePositiveBuffs = false)
     {
         return MicrobeEnvironmentalToleranceCalculations.CalculateTolerances(tolerancesEditor.CurrentTolerances,
-            editedMicrobeOrganelles, Editor.CurrentPatch.Biome);
+            editedMicrobeOrganelles, Editor.CurrentPatch.Biome, excludePositiveBuffs);
     }
 
     /// <summary>
