@@ -9,6 +9,10 @@ using Systems;
 /// </summary>
 public partial class CellBodyPlanEditorComponent
 {
+    private readonly List<Label> activeToleranceWarnings = new();
+
+    private int usedToleranceWarnings;
+
     protected override void OnTranslationsChanged()
     {
         organismStatisticsPanel.OnTranslationsChanged();
@@ -70,19 +74,14 @@ public partial class CellBodyPlanEditorComponent
 
         float consumptionProductionRatio = energyBalance.TotalConsumption / energyBalance.TotalProduction;
 
-        // TODO: environmental tolerances for multicellular
-        var environmentalTolerances = new ResolvedMicrobeTolerances
-        {
-            HealthModifier = 1,
-            OsmoregulationModifier = 1,
-            ProcessSpeedModifier = 1,
-        };
+        var environmentalTolerances =
+            MicrobeEnvironmentalToleranceCalculations.ResolveToleranceValues(Editor.CalculateRawTolerances());
 
         foreach (var process in processes)
         {
             // This requires the inputs to be in the biome to give a realistic prediction of how fast the processes
             // *might* run once swimming around in the stage.
-            // This uses just environmental factor as we put the specialization into the above loop.
+            // This uses just environmental factors as we put the specialization into the above loop.
             var singleProcess = ProcessSystem.CalculateProcessMaximumSpeed(process,
                 environmentalTolerances.ProcessSpeedModifier, biome, CompoundAmountType.Current, true);
 
@@ -196,7 +195,7 @@ public partial class CellBodyPlanEditorComponent
             {
                 if (ReferenceEquals(orderList[j], cell.Data!))
                 {
-                    // +1 to be user readable numbers
+                    // +1 to be user-readable numbers
                     order = j + 1;
                     break;
                 }
@@ -210,5 +209,27 @@ public partial class CellBodyPlanEditorComponent
     private void OnGrowthOrderCoordinatesToggled(bool show)
     {
         growthOrderGUI.ShowCoordinates = show;
+    }
+
+    private void CalculateAndDisplayToleranceWarnings()
+    {
+        // We exclude bonuses here so that the warnings display doesn't have a partial line about a debuff and then
+        // inexplicably also a bonus percentage as that would be very confusing to see.
+        var tolerances = CalculateRawTolerances(true);
+
+        MicrobeEnvironmentalToleranceCalculations.ManageToleranceProblemListGUI(ref usedToleranceWarnings,
+            activeToleranceWarnings, tolerances,
+            MicrobeEnvironmentalToleranceCalculations.ResolveToleranceValues(tolerances), toleranceWarningContainer,
+            toleranceWarningsFont, MaxToleranceWarnings);
+
+        if (usedToleranceWarnings > 0)
+        {
+            tolerancesTabButton.Visible = true;
+        }
+    }
+
+    private void OnTolerancesEditorChangedData()
+    {
+        OnTolerancesChanged(tolerancesEditor.CurrentTolerances);
     }
 }
