@@ -1810,6 +1810,8 @@ public partial class EngulfingSystem : BaseSystem<World, float>
         // Safety check in case the animation started too soon (component not created yet)
         if (!engulfedObject.Has<AttachedToEntity>())
         {
+            // TODO: there's some cases where this can start to get spammed a lot
+            // TODO: see: https://github.com/Revolutionary-Games/Thrive/issues/4704
             GD.PrintErr("Engulfed object doesn't have attached to component set when doing bulk animation");
             return false;
         }
