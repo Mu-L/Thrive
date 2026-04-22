@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-20 22:21+0200\n"
+"POT-Creation-Date: 2026-04-22 17:18+0300\n"
 "PO-Revision-Date: 2026-04-20 23:52+0000\n"
 "Last-Translator: doomlightning <tamirt500@gmail.com>\n"
 "Language-Team: Hebrew <https://translate.revolutionarygamesstudio.com/projects/thrive/thrive-game/he/>\n"
@@ -3683,6 +3683,20 @@ msgid "LOCAL_INITIAL_LETTER"
 msgstr "מ"
 
 msgid "LOCK_DAY_NIGHT_CYCLE"
+msgstr ""
+
+#, fuzzy
+msgid "LOOK_LEFT"
+msgstr "מקש שמאלה"
+
+#, fuzzy
+msgid "LOOK_RIGHT"
+msgstr "מקש ימינה"
+
+msgid "LOOK_SCREEN_DOWN_OR_3D_TOWARDS_UP"
+msgstr ""
+
+msgid "LOOK_SCREEN_UP_OR_3D_TOWARDS_DOWN"
 msgstr ""
 
 #, fuzzy

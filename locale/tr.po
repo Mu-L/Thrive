@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-04-20 22:21+0200\n"
+"POT-Creation-Date: 2026-04-22 17:18+0300\n"
 "PO-Revision-Date: 2026-04-20 23:52+0000\n"
 "Last-Translator: punctdan <yunusemredilek@hotmail.com>\n"
 "Language-Team: Turkish <https://translate.revolutionarygamesstudio.com/projects/thrive/thrive-game/tr/>\n"
@@ -3455,6 +3455,20 @@ msgstr "Y"
 
 msgid "LOCK_DAY_NIGHT_CYCLE"
 msgstr "Gece Gündüz Döngüsünü Kilitle"
+
+#, fuzzy
+msgid "LOOK_LEFT"
+msgstr "Sol yön tuşu"
+
+#, fuzzy
+msgid "LOOK_RIGHT"
+msgstr "Sağ yön tuşu"
+
+msgid "LOOK_SCREEN_DOWN_OR_3D_TOWARDS_UP"
+msgstr ""
+
+msgid "LOOK_SCREEN_UP_OR_3D_TOWARDS_DOWN"
+msgstr ""
 
 msgid "LOWER_SCALE_INCREASES_PERFORMANCE"
 msgstr "(daha düşük değerler performansı arttırır)"
