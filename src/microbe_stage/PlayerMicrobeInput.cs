@@ -25,7 +25,7 @@ public partial class PlayerMicrobeInput : NodeWithInput
     private Vector3 controllerLookDirection = new(0, 0, -1);
 
     private bool autoMove;
-    private bool hasControllerLookDirection;
+    private bool hasExternalLookDirection;
 
 #pragma warning disable CA2213 // this is our parent object
 
@@ -39,6 +39,18 @@ public partial class PlayerMicrobeInput : NodeWithInput
     {
         // Not the cleanest that the parent has to be MicrobeState type...
         stage = (MicrobeStage)GetParent();
+    }
+
+    public override void _EnterTree()
+    {
+        base._EnterTree();
+        KeyPromptHelper.InputTypeChanged += OnSwitchedInputTypes;
+    }
+
+    public override void _ExitTree()
+    {
+        base._ExitTree();
+        KeyPromptHelper.InputTypeChanged -= OnSwitchedInputTypes;
     }
 
     [RunOnKeyDown("g_hold_forward")]
@@ -87,13 +99,12 @@ public partial class PlayerMicrobeInput : NodeWithInput
 
             var movement = new Vector3(leftRightMovement, 0, forwardMovement);
 
-            if (inputMethod == ActiveInputMethod.Controller)
+            if (inputMethod == ActiveInputMethod.Controller || hasExternalLookDirection)
             {
                 control.LookAtPoint = position.Position + controllerLookDirection * CONTROLLER_LOOK_POINT_DISTANCE;
             }
             else
             {
-                hasControllerLookDirection = false;
                 control.LookAtPoint = stage.Camera.CursorWorldPos;
             }
 
@@ -125,17 +136,13 @@ public partial class PlayerMicrobeInput : NodeWithInput
 
     // TODO: for some reason this doesn't feel fully smooth to rotate over? Maybe one axis is deadzoned to 0 when other
     // is still active thus causing the feel of the cardinal directions "snapping"?
+    // We have to swap the pitch
     [RunOnAxis(new[] { "g_look_yaw_negative", "g_look_yaw_positive" }, new[] { -1.0f, 1.0f })]
     [RunOnAxis(new[] { "g_look_pitch_negative", "g_look_pitch_positive" }, new[] { -1.0f, 1.0f })]
-    [RunOnAxisGroup(InvokeAlsoWithNoInput = true, InvokeWithDelta = false, TrackInputMethod = true)]
-    public void OnControllerLook(float horizontalMovement, float verticalMovement, ActiveInputMethod inputMethod)
+    [RunOnAxisGroup(InvokeAlsoWithNoInput = true, InvokeWithDelta = false)]
+    public void OnControllerLook(float horizontalMovement, float verticalMovement)
     {
-        if (inputMethod != ActiveInputMethod.Controller)
-        {
-            hasControllerLookDirection = false;
-            return;
-        }
-
+        // We don't need to check the input method here as keyboard look direction is valid
         var direction = new Vector3(horizontalMovement, 0, verticalMovement);
 
         // Keep previous look direction when no new input
@@ -144,6 +151,7 @@ public partial class PlayerMicrobeInput : NodeWithInput
             return;
 
         controllerLookDirection = direction.Normalized();
+        hasExternalLookDirection = true;
 
         if (!stage.HasPlayer)
             return;
@@ -529,5 +537,11 @@ public partial class PlayerMicrobeInput : NodeWithInput
             stage.Camera.CursorWorldPos);
 
         AchievementsManager.ReportCheatsUsed();
+    }
+
+    private void OnSwitchedInputTypes(object? sender, EventArgs e)
+    {
+        // Reset this as we no longer always reset this to allow keyboard look-directions to be specified
+        hasExternalLookDirection = false;
     }
 }
