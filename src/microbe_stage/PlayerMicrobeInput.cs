@@ -136,7 +136,6 @@ public partial class PlayerMicrobeInput : NodeWithInput
 
     // TODO: for some reason this doesn't feel fully smooth to rotate over? Maybe one axis is deadzoned to 0 when other
     // is still active thus causing the feel of the cardinal directions "snapping"?
-    // We have to swap the pitch
     [RunOnAxis(new[] { "g_look_yaw_negative", "g_look_yaw_positive" }, new[] { -1.0f, 1.0f })]
     [RunOnAxis(new[] { "g_look_pitch_negative", "g_look_pitch_positive" }, new[] { -1.0f, 1.0f })]
     [RunOnAxisGroup(InvokeAlsoWithNoInput = true, InvokeWithDelta = false)]
